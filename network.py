@@ -1,11 +1,10 @@
 from simulation_engine import Event
 
 class Network:
-    def __init__(self, network_id, bandwidth, engine, gpus):
-        self.network_id = network_id
+    def __init__(self, object_id, bandwidth, engine):
+        self.object_id = object_id
         self.bandwidth = bandwidth  # Assume constant for now (no bandwidth sharing)
         self.engine = engine
-        self.gpus = gpus  # Dictionary of GPU objects
 
     def handle_event(self, event):
         """Processes network-related events."""

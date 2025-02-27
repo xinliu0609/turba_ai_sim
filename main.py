@@ -2,41 +2,80 @@ from simulation_engine import SimulationEngine
 from gpu import GPU
 from network import Network
 
-# Constants
-NUM_GPUS = 3
-BANDWIDTH = 100  # Assume no bandwidth sharing
-NETWORK_ID = "network"
 
-# Define instructions for each GPU
-gpu_instructions = {
-    0: [("compute", 5), ("communicate", 1, 500)],
-    1: [("compute", 3), ("communicate", 2, 300)],
-    2: [("compute", 4), ("communicate", 0, 400)]
-}
+def read_input_files(file_path):
+    """Read the text config file, exclude comments and whitespace
+    
+    Rules:
+    - Lines starting with '#' are ignored.
+    - Empty lines are ignored.
+    - Lines with '#' elsewhere keep only the part before '#'.
+    """
+    valid_lines = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            # Remove leading/trailing whitespace
+            line = line.strip()
+            if not line:
+                continue
 
-# Initialize engine
-engine = SimulationEngine()
+            if line.startswith("#"):
+                continue
 
-# Create GPUs
-gpus = {}
-for gpu_id, instructions in gpu_instructions.items():
-    gpus[gpu_id] = GPU(gpu_id, instructions, None, engine)
+            if "#" in line:
+                line = line.split("#", 1)[0].strip()
 
-# Create Network and pass GPU references
-network = Network(NETWORK_ID, BANDWIDTH, engine, gpus)
+            if line:
+                valid_lines.append(line)
 
-# Assign network to GPUs (fix circular dependency)
-for gpu in gpus.values():
-    gpu.network = network
+    return valid_lines
 
-# Register objects in the engine
-for gpu_id, gpu in gpus.items():
-    engine.register_object(gpu_id, gpu)
-engine.register_object(NETWORK_ID, network)
 
-# Start initial instructions for all GPUs
-for gpu in gpus.values():
-    gpu.start_next_instruction()
+def initialize_simulation(trace_file, system_config_file):
+    """Initializes the simulation engine, GPUs, and network."""
+    
+    # read gpu trace file and produce instructions for each GPU
+    instruction_lines = read_input_files(trace_file)
+    gpu_instructions = []
+    print(instruction_lines)
 
-# Run the simulation
-engine.run()
+    system_config_lines = read_input_files(system_config_file)
+    bandwidth = 800 # Gbps
+    num_gpus = 8
+    print(system_config_lines)
+
+    # Initialize the simulation engine
+    engine = SimulationEngine()
+    
+    # Create and register network
+    network = Network("network", bandwidth, engine)
+    engine.register_object(num_gpus+1, network)
+
+    # Create and register GPUs
+    gpus = []
+    for gpu_id in range(0, num_gpus):
+        gpu = GPU(gpu_id, gpu_instructions, network, engine)
+        engine.register_object(gpu_id, gpu)
+        gpus.append(gpu)
+
+    return engine, gpus
+
+
+def main():
+    """Main function to run the simulation."""
+    system_config_file = "system_config.txt"
+    trace_file = "gpu_trace.txt"
+
+    # Read input and initialize simulation
+    engine, gpus = initialize_simulation(trace_file, system_config_file)
+
+    # Start initial instructions for all GPUs
+    for gpu in gpus:
+        gpu.start_next_instruction()
+
+    # Run the simulation
+    engine.run()
+    
+
+if __name__ == "__main__":
+    main()
