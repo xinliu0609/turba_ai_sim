@@ -63,7 +63,7 @@ def initialize_simulation(trace_file, system_config_file):
     # Create and register GPUs
     gpus = []
     for gpu_id in range(0, num_gpus):
-        gpu = GPU(gpu_id, instruction_lines, network, engine)
+        gpu = GPU(gpu_id, instruction_lines, compute_tflops, chunk_size_bytes, network, engine)
         engine.register_object(gpu_id, gpu)
         gpus.append(gpu)
 
@@ -80,7 +80,7 @@ def main():
 
     # Start initial instructions for all GPUs
     for gpu in gpus:
-        gpu.start_next_instruction()
+        gpu.start_gpu()
 
     # Run the simulation
     engine.run()

@@ -1,11 +1,11 @@
 import heapq
 
 class Event:
-    def __init__(self, timestamp, event_type, target_id, *args):
+    def __init__(self, timestamp, event_type, target_id, args):
         self.timestamp = timestamp
         self.event_type = event_type  # Example: "COMPUTE_DONE", "COMM_START"
         self.target_id = target_id    # The object ID that should handle this event
-        self.args = args              # Additional arguments
+        self.args = args            # Additional arguments in dict format
 
     def __lt__(self, other):
         return self.timestamp < other.timestamp  # Priority queue ordering

@@ -1,73 +1,118 @@
 from simulation_engine import Event
+from collections import deque
+import math
 
 class Instruction:
     def __init__(self, event_type, source, destination, size, operation):
-        self.event_type = event_type
+        self.ins_type = event_type # rename it ins_type to avoid confusion of simulation event's type
         self.source = source
         self.destination = destination
         self.size = size
         self.operation = operation
+        self.start_time_ns = 0
+        self.end_time_ns = 0
     
     def __str__(self):
-        s = "<Event_type: " + self.event_type
+        s = "<Ins_type: " + self.ins_type
         s += ", Source: " + self.source
         s += ", Destination: " + self.destination
         s += ", Size: " + str(self.size)
         s += ", Operation: " + self.operation + ">"
         return s
 
+
 class GPU:
-    def __init__(self, gpu_id, instructions, network, engine):
+    def __init__(self, gpu_id, instructions, compute_tflops, chunk_size_bytes, network, engine):
         self.gpu_id = gpu_id
-        self.instructions = [self.parse_instruction(ins) for ins in instructions]
+        self.compute_tflops = compute_tflops
+        self.chunk_size_bytes = chunk_size_bytes
         self.network = network
         self.engine = engine
-        self.current_instruction = 0  # Track execution progress
+        # separate compute and communication events into different queues
+        # since they can run in parallel
+        self.compute_queue = deque()
+        self.comm_queue = deque()
+        for instruction in instructions:
+            ins = self.parse_instruction(instruction)
+            if ins.ins_type.lower() == "compute":
+                self.compute_queue.append(ins)
+            elif ins.ins_type.lower() == "communication":
+                self.comm_queue.append(ins)
+            else:
+                raise ValueError(f"Unknown event type {ins.event_type}")
+        # store the finished instructions, output as results
+        self.finished_instrucion = []
 
     def parse_instruction(self, ins):
+        """Convert the instruction text to object."""
         ins_list = [s.replace(" ", "") if s.strip() else "" for s in ins.split(",")]
         if len(ins_list) != 5:
             raise AssertionError(f"Wrong trace format at {ins_list}")
-        instruction = Instruction(ins_list[0], ins_list[1], ins_list[2], int(ins_list[3]), ins_list[4])
-        return instruction
+        return Instruction(ins_list[0], ins_list[1], ins_list[2], int(ins_list[3]), ins_list[4])
 
     def handle_event(self, event):
         """Decides how to handle an event based on its type."""
         if event.event_type == "COMPUTE_DONE":
             self.compute_done(event)
-        elif event.event_type == "COMM_END":
+        elif event.event_type == "COMM_DONE":
             self.communication_done(event)
         else:
             raise ValueError(f"Unknown event type {event.event_type} for GPU {self.gpu_id}")
 
-    def start_next_instruction(self):
-        """Processes the next instruction in the list."""
-        if self.current_instruction >= len(self.instructions):
-            return  # All instructions completed
+    def start_gpu(self):
+        """Start executing both compute and comm instructions"""
+        self.run_next_compute()
+        self.run_next_comm()
 
-        instr = self.instructions[self.current_instruction]
-        self.current_instruction += 1
-
-        if instr.event_type.lower() == "compute":
-            compute_time = instr.size
-            print(f"GPU {self.gpu_id} starts computing for {compute_time} units")
-            self.engine.schedule_event(Event(
-                self.engine.current_time + compute_time, "COMPUTE_DONE", self.gpu_id
-            ))
-
-        elif instr.event_type.lower() == "communication":
-            target_gpu, data_size = 0, instr.size
-            print(f"GPU {self.gpu_id} prepares to send {data_size} data to GPU {target_gpu}")
-            self.engine.schedule_event(Event(
-                self.engine.current_time, "COMM_START", self.network.object_id, self.gpu_id, target_gpu, data_size
-            ))
+    def run_next_compute(self):
+        """Processes the next compute instruction in the queue."""
+        if not self.compute_queue:
+            return
+        
+        ins = self.compute_queue.popleft()
+        ins.start_time_ns = self.engine.current_time
+        flops = ins.size
+        compute_dur_ns = math.ceil((flops / self.compute_tflops) * 1e-3)
+        compute_done_event = Event(timestamp=self.engine.current_time + compute_dur_ns, 
+                                   event_type="COMPUTE_DONE", 
+                                   target_id=self.gpu_id, 
+                                   args={"ins": ins})
+        print(f"GPU {self.gpu_id} started computing at {self.engine.current_time}")
+        self.engine.schedule_event(compute_done_event)
 
     def compute_done(self, event):
         """Handles computation completion and starts the next instruction."""
         print(f"GPU {self.gpu_id} finished computing at {event.timestamp}")
-        self.start_next_instruction()
+        
+        # retrieve the instruction, log finished time and store it
+        finished_ins = event.args["ins"]
+        finished_ins.finish_time_ns = self.engine.current_time
+        self.finished_instrucion.append(finished_ins)
+        self.run_next_compute()
+
+    def run_next_comm(self):
+        """Processes the next communication instruction in the queue.
+           There will be an event COMM_START that handled by the network object
+        """
+        if not self.comm_queue:
+            return
+        
+        ins = self.comm_queue.popleft()
+        ins.start_time_ns = self.engine.current_time
+        comm_start_event = Event(timestamp=self.engine.current_time,
+                            event_type="COMM_START",
+                            target_id=self.network.object_id, 
+                            args={"size_bytes": ins.size, "src_gpu": self.gpu_id, "ins": ins})
+        self.engine.schedule_event(comm_start_event)
 
     def communication_done(self, event):
-        """Handles communication completion and starts the next instruction."""
-        print(f"GPU {self.gpu_id} received data from GPU {event.args[0]} at {event.timestamp}")
-        self.start_next_instruction()
+        """Handles communication completion and starts the next instruction.
+           This event is scheduled by the network object, after ALL of the transmission
+           by this GPU is finished (all of the data to all of its destinations)
+        """
+
+        print(f"GPU {self.gpu_id} finished comm at {event.timestamp}")
+        finished_ins = event.args["ins"]
+        finished_ins.finish_time_ns = event.timestamp
+        self.finished_instrucion.append(finished_ins)
+        self.run_next_comm()
