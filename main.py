@@ -1,18 +1,19 @@
+from typing import List, Tuple
 from simulation_engine import SimulationEngine
 from gpu import GPU
 from network import Network
 
 
-def read_input_files(file_path):
+def read_input_files(file_path: str) -> List[str]:
     """Read the text config file, exclude comments and whitespace
-    
+
     Rules:
     - Lines starting with '#' are ignored.
     - Empty lines are ignored.
     - Lines with '#' elsewhere keep only the part before '#'.
     """
-    valid_lines = []
-    with open(file_path, 'r') as file:
+    valid_lines: List[str] = []
+    with open(file_path, "r") as file:
         for line in file:
             # Remove leading/trailing whitespace
             line = line.strip()
@@ -31,16 +32,18 @@ def read_input_files(file_path):
     return valid_lines
 
 
-def initialize_simulation(trace_file, system_config_file):
+def initialize_simulation(
+    trace_file: str, system_config_file: str
+) -> Tuple[SimulationEngine, List[GPU]]:
     """Initializes the simulation engine, GPUs, and network."""
-    
+
     # read gpu trace file and produce instructions for each GPU
     instruction_lines = read_input_files(trace_file)
     system_config_lines = read_input_files(system_config_file)
     config_dict = {}
     for line in system_config_lines:
         if ":" in line:
-            key, value = line.split(":", 1) # max 1 split
+            key, value = line.split(":", 1)  # max 1 split
             key = key.strip()
             value = value.strip()
             config_dict[key] = value
@@ -54,23 +57,25 @@ def initialize_simulation(trace_file, system_config_file):
     chunk_size_bytes = int(config_dict["COMMUNICATION_CHUNK_SIZE"])
 
     # Initialize the simulation engine
-    engine = SimulationEngine()
-    
+    engine: SimulationEngine = SimulationEngine()
+
     # Create and register network
-    network = Network(num_gpus, num_gpus, bandwidth_gbps, topology, engine)
+    network: Network = Network(num_gpus, num_gpus, bandwidth_gbps, topology, engine)
     engine.register_object(network.object_id, network)
 
     # Create and register GPUs
-    gpus = []
+    gpus: List[GPU] = []
     for gpu_id in range(0, num_gpus):
-        gpu = GPU(gpu_id, instruction_lines, compute_tflops, chunk_size_bytes, network, engine)
+        gpu: GPU = GPU(
+            gpu_id, instruction_lines, compute_tflops, chunk_size_bytes, network, engine
+        )
         engine.register_object(gpu_id, gpu)
         gpus.append(gpu)
 
     return engine, gpus
 
 
-def main():
+def main() -> None:
     """Main function to run the simulation."""
     system_config_file = "system_config.txt"
     trace_file = "gpu_trace.txt"
@@ -84,7 +89,7 @@ def main():
 
     # Run the simulation
     engine.run()
-    
+
 
 if __name__ == "__main__":
     main()
