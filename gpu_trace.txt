@@ -1,6 +1,6 @@
 # Common trace file for ALL GPUs (SPMD execution)
 # Format: Event_type, Source, Destination, Size, Operation
-COMPUTE, ALL, , 100, EXECUTE  # for compute type, the "size" is in the unit of FLOPS
-COMPUTE, ALL, , 50, EXECUTE    
-COMMUNICATION, ALL, , 16, ALL_REDUCE  # for communication type, the "size" is in the unit of GB
-COMPUTE, ALL, , 30, EXECUTE
+COMPUTE, ALL, , 100000000, EXECUTE  # for compute type, the "size" is in the unit of FLOPS
+COMPUTE, ALL, , 50000000, EXECUTE    
+COMMUNICATION, ALL, , 1048576, ALL_REDUCE  # for communication type, the "size" is in the unit of Bytes
+COMPUTE, ALL, , 30000000, EXECUTE

@@ -7,14 +7,14 @@ class Network:
         self,
         object_id: int,
         num_gpus: int,
-        bandwidth_gbps: int,
+        bandwidth_GBps: int,
         topology: str,
         engine: SimulationEngine,
     ) -> None:
         print(f"get object id = {object_id}")
         self.object_id: int = object_id
         self.num_gpus: int = num_gpus
-        self.bandwidth_gbps: int = bandwidth_gbps  # Assume GPUs have the same bandwidth
+        self.bandwidth_GBps: int = bandwidth_GBps  # Assume GPUs have the same bandwidth
         self.topology: str = topology
         self.engine: SimulationEngine = engine
 
@@ -28,8 +28,8 @@ class Network:
     def handle_comm_start(self, event: Event) -> None:
         """Handles the start of a communication event."""
         src_gpu: int = event.args["src_gpu"]
-        size_bytes: int = event.args["size_bytes"]
-        transfer_time_ns: int = math.ceil(size_bytes * 8 / self.bandwidth_gbps)
+        size_bytes: float = event.args["size_bytes"]
+        transfer_time_ns: int = math.ceil((size_bytes / self.bandwidth_GBps))
 
         print(
             f"Network: GPU {src_gpu} starts sending {size_bytes} data to all other GPUs"

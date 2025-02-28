@@ -17,7 +17,7 @@ class Instruction:
         self.ins_type: str = event_type  # rename it ins_type to avoid confusion of simulation event's type
         self.source: str = source
         self.destination: str = destination
-        self.size: int = size
+        self.size: int = size  # for compute it's FLOPS, for comm it's Bytes
         self.operation: str = operation
         self.start_time_ns: int = 0
         self.end_time_ns: int = 0
@@ -59,7 +59,7 @@ class GPU:
             else:
                 raise ValueError(f"Unknown event type {ins.ins_type}")
         # store the finished instructions, output as results
-        self.finished_instrucion: List[Instruction] = []
+        self.finished_instructions: List[Instruction] = []
 
     def parse_instruction(self, ins: str) -> Instruction:
         """Convert the instruction text to object."""
@@ -94,16 +94,16 @@ class GPU:
             return
 
         ins: Instruction = self.compute_queue.popleft()
-        ins.start_time_ns = self.engine.current_time
-        flops: int = ins.size
-        compute_dur_ns: int = math.ceil((flops / self.compute_tflops) * 1e-3)
+        ins.start_time_ns = self.engine.current_time_ns
+        tflops: int = ins.size
+        compute_dur_ns: int = math.ceil((tflops / self.compute_tflops) * 1e-3)
         compute_done_event: Event = Event(
-            timestamp=self.engine.current_time + compute_dur_ns,
+            timestamp=self.engine.current_time_ns + compute_dur_ns,
             event_type="COMPUTE_DONE",
             target_id=self.gpu_id,
             args={"ins": ins},
         )
-        print(f"GPU {self.gpu_id} started computing at {self.engine.current_time}")
+        print(f"GPU {self.gpu_id} started computing at {self.engine.current_time_ns}")
         self.engine.schedule_event(compute_done_event)
 
     def compute_done(self, event: Event) -> None:
@@ -112,8 +112,8 @@ class GPU:
 
         # retrieve the instruction, log finished time and store it
         finished_ins: Instruction = event.args["ins"]
-        finished_ins.end_time_ns = self.engine.current_time
-        self.finished_instrucion.append(finished_ins)
+        finished_ins.end_time_ns = event.timestamp
+        self.finished_instructions.append(finished_ins)
         self.run_next_compute()
 
     def run_next_comm(self) -> None:
@@ -124,9 +124,9 @@ class GPU:
             return
 
         ins: Instruction = self.comm_queue.popleft()
-        ins.start_time_ns = self.engine.current_time
+        ins.start_time_ns = self.engine.current_time_ns
         comm_start_event: Event = Event(
-            timestamp=self.engine.current_time,
+            timestamp=self.engine.current_time_ns,
             event_type="COMM_START",
             target_id=self.network.object_id,
             args={"size_bytes": ins.size, "src_gpu": self.gpu_id, "ins": ins},
@@ -142,5 +142,5 @@ class GPU:
         print(f"GPU {self.gpu_id} finished comm at {event.timestamp}")
         finished_ins: Instruction = event.args["ins"]
         finished_ins.end_time_ns = event.timestamp
-        self.finished_instrucion.append(finished_ins)
+        self.finished_instructions.append(finished_ins)
         self.run_next_comm()

@@ -20,7 +20,7 @@ class SimulationEngine:
     def __init__(self) -> None:
         self.event_queue: List[Event] = []
         self.objects: Dict[int, Any] = {}  # Maps object IDs to objects (GPU/Network)
-        self.current_time: int = 0
+        self.current_time_ns: int = 0
 
     def register_object(self, obj_id: int, obj: Any) -> None:
         """Registers an object in the system by its ID."""
