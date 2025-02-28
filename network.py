@@ -1,9 +1,12 @@
 from simulation_engine import Event
 
 class Network:
-    def __init__(self, object_id, bandwidth, engine):
+    def __init__(self, object_id, num_gpus, bandwidth_gbps, topology, engine):
+        print(f"get object id = {object_id}")
         self.object_id = object_id
-        self.bandwidth = bandwidth  # Assume constant for now (no bandwidth sharing)
+        self.num_gpus = num_gpus
+        self.bandwidth_gbps = bandwidth_gbps  # Assume constant for now (no bandwidth sharing)
+        self.topology = topology
         self.engine = engine
 
     def handle_event(self, event):
@@ -16,7 +19,7 @@ class Network:
     def handle_comm_start(self, event):
         """Handles the start of a communication event."""
         src_gpu, dst_gpu, data_size = event.args
-        transfer_time = data_size / self.bandwidth
+        transfer_time = data_size / self.bandwidth_gbps
         completion_time = event.timestamp + transfer_time
 
         print(f"Network: GPU {src_gpu} starts sending {data_size} data to GPU {dst_gpu} at {event.timestamp}, will complete at {completion_time}")
