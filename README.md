@@ -65,40 +65,7 @@ Network: GPU 1 starts sending 1048576 data to all other GPUs
 Network: GPU 4 starts sending 1048576 data to all other GPUs
 Network: GPU 3 starts sending 1048576 data to all other GPUs
 Network: GPU 7 starts sending 1048576 data to all other GPUs
-GPU 7 finished computing at 500
-GPU 7 started computing at 0
-GPU 7 finished computing at 250
-GPU 7 started computing at 0
-GPU 7 finished computing at 150
-GPU 6 finished computing at 500
-GPU 6 started computing at 0
-GPU 6 finished computing at 250
-GPU 6 started computing at 0
-GPU 6 finished computing at 150
-GPU 1 finished computing at 500
-GPU 1 started computing at 0
-GPU 1 finished computing at 250
-GPU 1 started computing at 0
-GPU 1 finished computing at 150
-GPU 4 finished computing at 500
-GPU 4 started computing at 0
-GPU 4 finished computing at 250
-GPU 4 started computing at 0
-GPU 4 finished computing at 150
-GPU 3 finished computing at 500
-GPU 3 started computing at 0
-GPU 3 finished computing at 250
-GPU 3 started computing at 0
-GPU 3 finished computing at 150
-GPU 2 finished computing at 500
-GPU 2 started computing at 0
-GPU 2 finished computing at 250
-GPU 2 started computing at 0
-GPU 2 finished computing at 150
-GPU 0 finished computing at 500
-GPU 0 started computing at 0
-GPU 0 finished computing at 250
-GPU 0 started computing at 0
+...
 GPU 0 finished computing at 150
 GPU 5 finished computing at 500
 GPU 5 started computing at 0
@@ -124,10 +91,11 @@ To verify the implementation:
 pytest
 ```
 
-### **3️⃣ Run Unit Tests**
+### **4️⃣ Auto formatting and type check**
 
-To verify the implementation:
+After making changes to the files, run:
 
 ```bash
-pytest
+black .
+mypy .
 ```
