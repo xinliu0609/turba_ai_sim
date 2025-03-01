@@ -22,3 +22,112 @@
 - **[`.gitignore`](./.gitignore)** → Specifies files that should be ignored by Git (e.g., `.pyc`, `__pycache__`).
 - **[`.mypy.ini`](./mypy.ini)** → Specifies the rules for type checking with `mypy`.
 
+---
+
+## 🚀 **Getting Started**
+
+### **1️⃣ Install Dependencies**
+
+If your project has dependencies, install them using:
+
+```bash
+pip install black
+pip install mypy
+pip install pytest
+```
+
+### **2️⃣ Run the Simulator**
+
+To start the simulation, do the following:
+- update **[`system_config.txt`](./system_config.txt)** and **[`gpu_trace.txt`](./gpu_trace.txt)** according to your setup
+- run the command:
+
+```bash
+python main.py
+```
+
+The sample output looks like:
+```
+get object id = 8
+GPU 0 started computing at 0
+GPU 1 started computing at 0
+GPU 2 started computing at 0
+GPU 3 started computing at 0
+GPU 4 started computing at 0
+GPU 5 started computing at 0
+GPU 6 started computing at 0
+GPU 7 started computing at 0
+Network: GPU 0 starts sending 1048576 data to all other GPUs
+Network: GPU 2 starts sending 1048576 data to all other GPUs
+Network: GPU 6 starts sending 1048576 data to all other GPUs
+Network: GPU 5 starts sending 1048576 data to all other GPUs
+Network: GPU 1 starts sending 1048576 data to all other GPUs
+Network: GPU 4 starts sending 1048576 data to all other GPUs
+Network: GPU 3 starts sending 1048576 data to all other GPUs
+Network: GPU 7 starts sending 1048576 data to all other GPUs
+GPU 7 finished computing at 500
+GPU 7 started computing at 0
+GPU 7 finished computing at 250
+GPU 7 started computing at 0
+GPU 7 finished computing at 150
+GPU 6 finished computing at 500
+GPU 6 started computing at 0
+GPU 6 finished computing at 250
+GPU 6 started computing at 0
+GPU 6 finished computing at 150
+GPU 1 finished computing at 500
+GPU 1 started computing at 0
+GPU 1 finished computing at 250
+GPU 1 started computing at 0
+GPU 1 finished computing at 150
+GPU 4 finished computing at 500
+GPU 4 started computing at 0
+GPU 4 finished computing at 250
+GPU 4 started computing at 0
+GPU 4 finished computing at 150
+GPU 3 finished computing at 500
+GPU 3 started computing at 0
+GPU 3 finished computing at 250
+GPU 3 started computing at 0
+GPU 3 finished computing at 150
+GPU 2 finished computing at 500
+GPU 2 started computing at 0
+GPU 2 finished computing at 250
+GPU 2 started computing at 0
+GPU 2 finished computing at 150
+GPU 0 finished computing at 500
+GPU 0 started computing at 0
+GPU 0 finished computing at 250
+GPU 0 started computing at 0
+GPU 0 finished computing at 150
+GPU 5 finished computing at 500
+GPU 5 started computing at 0
+GPU 5 finished computing at 250
+GPU 5 started computing at 0
+GPU 5 finished computing at 150
+GPU 7 finished comm at 41944
+GPU 1 finished comm at 41944
+GPU 6 finished comm at 41944
+GPU 2 finished comm at 41944
+GPU 5 finished comm at 41944
+GPU 4 finished comm at 41944
+GPU 0 finished comm at 41944
+GPU 3 finished comm at 41944
+Simulation completed.
+```
+
+### **3️⃣ Run Unit Tests**
+
+To verify the implementation:
+
+```bash
+pytest
+```
+
+### **3️⃣ Run Unit Tests**
+
+To verify the implementation:
+
+```bash
+pytest
+```
